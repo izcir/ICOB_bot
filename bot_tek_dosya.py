@@ -83,46 +83,44 @@ def admin(client, message):
     bekle = message.reply("Adminler bulunuyor...")
     for uye in client.iter_chat_members(message.chat.id):
         if uye.user.is_bot == False:
-            if uye.status == "creator":
-                if uye.user.username:baskan += f"👮‍♂️  @{uye.user.username}\n"
-                else:baskan += f"👮‍♂️  [{uye.user.first_name}](tg://user?id={uye.user.id})\n"
             if uye.status == "administrator":
                 if uye.user.username:admin += f"👮‍♂️  @{uye.user.username}\n"
                 else:admin += f"👮‍♂️  [{uye.user.first_name}](tg://user?id={uye.user.id})\n"
-            else:pass
-        else:pass
+            elif uye.status == "creator":
+                if uye.user.username:baskan += f"👮‍♂️  @{uye.user.username}\n"
+                else:baskan += f"👮‍♂️  [{uye.user.first_name}](tg://user?id={uye.user.id})\n"
     bekle.edit(f"**__Yöneticilerimiz__** ;\n{baskan}{admin}")
 
 #############################
 
+@ICOB_BOT.on_message(Filters.command(["bildir"]))
 @ICOB_BOT.on_message(Filters.command(["bildir"]))
 def bildir(client, message):
     aciklama = " ".join(message.text.split()[1:])
     if len(aciklama) == 0:aciklama = "Yok"
 
     if message.chat.type != "private":
-        yetkiler = ("creator", "administrator")
         if message.reply_to_message:
+            yetkiler = ("creator", "administrator")
             if message.from_user.id == message.reply_to_message.from_user.id:
                 message.reply("Kendini mi bildirmek istiyosun 🙄")
-            
+
             elif client.get_chat_member(message.chat.id, message.from_user.id).status in yetkiler:
                 message.reply("Sen zaten yöneticisin. Kendine mi mesaj atmak istiyorsun 🙄")
-    
+
             else:
                 for uye in client.iter_chat_members(message.chat.id):
-                    if uye.user.is_bot == False:
-                        if uye.status == "creator" or uye.status == "administrator":
-                            client.send_message(uye.user.id, """[{}](tg://user?id={})[`{}`] kullanıcı **__{}__** grubundaki bir mesajı bildirdi.\n\n**__Bildirilen Kişi__**;\nUsername : **__{}__**\nID : **__{}__**\nİsim : **__{}__**\nSoyad : **__{}__**\n\n📂 Açıklama : **__{}__**\n\n            **MESAJ**\n👇👇👇👇👇👇""".format(
-                                message.from_user.first_name, message.from_user.id, message.from_user.id, message.chat.title, message.reply_to_message.from_user.username, message.reply_to_message.from_user.id, message.reply_to_message.from_user.first_name, message.reply_to_message.from_user.last_name, aciklama                                 
-                            ))
-                            client.forward_messages(uye.user.id, message.chat.id, message.reply_to_message.message_id, as_copy=True)
-                            message.reply("Mesaj yöneticilerimize bildirilmiştir.")
-                        else:pass
-                    else:pass
+                    if uye.user.is_bot == False and uye.status in [
+                        "creator",
+                        "administrator",
+                    ]:
+                        client.send_message(uye.user.id, """[{}](tg://user?id={})[`{}`] kullanıcı **__{}__** grubundaki bir mesajı bildirdi.\n\n**__Bildirilen Kişi__**;\nUsername : **__{}__**\nID : **__{}__**\nİsim : **__{}__**\nSoyad : **__{}__**\n\n📂 Açıklama : **__{}__**\n\n            **MESAJ**\n👇👇👇👇👇👇""".format(
+                            message.from_user.first_name, message.from_user.id, message.from_user.id, message.chat.title, message.reply_to_message.from_user.username, message.reply_to_message.from_user.id, message.reply_to_message.from_user.first_name, message.reply_to_message.from_user.last_name, aciklama                                 
+                        ))
+                        client.forward_messages(uye.user.id, message.chat.id, message.reply_to_message.message_id, as_copy=True)
+                        message.reply("Mesaj yöneticilerimize bildirilmiştir.")
         else:message.reply("Lütfen bildirmek istediğiniz mesajı yanıtlayınız.")
     else:message.reply("Özel sohbet bizi ilgilendirmez. :D")
-
 #############################
 
 LANGUAGES = {'af': 'afrikaans', 'sq': 'albanian', 'am': 'amharic', 'ar': 'arabic', 'hy': 'armenian', 'az': 'azerbaijani', 'eu': 'basque', 'be': 'belarusian', 'bn': 'bengali', 'bs': 'bosnian', 'bg': 'bulgarian', 'ca': 'catalan', 'ceb': 'cebuano', 'ny': 'chichewa', 'zh-cn': 'chinese (simplified)', 'zh-tw': 'chinese (traditional)', 
@@ -181,23 +179,23 @@ def google_search(client, message):
     if len(text.split()) == 1:
         message.edit("Lütfen araştırmak istediğiniz kelimeyi giriniz")
         return
-    else:
-        query = " ".join(text.split()[1:])
-        msg = "Araştırılan Kelime : {}\n\n".format(query)
-        res = GoogleSearchClient()
-        results = res.search(query).to_json()
-        if results:
-            i = 1
-            for result in ast.literal_eval(results):
-                msg += f"🔍 [{result['title']}]({result['url']})\n\n"
-                i += 1
-                if i == 10:
-                    break
 
-            try:
-                bekle.edit(msg, disable_web_page_preview=True, parse_mode="Markdown")
-            except Exception as e:
-                print(e)
+    query = " ".join(text.split()[1:])
+    msg = "Araştırılan Kelime : {}\n\n".format(query)
+    res = GoogleSearchClient()
+    results = res.search(query).to_json()
+    if results:
+        i = 1
+        for result in ast.literal_eval(results):
+            msg += f"🔍 [{result['title']}]({result['url']})\n\n"
+            i += 1
+            if i == 10:
+                break
+
+        try:
+            bekle.edit(msg, disable_web_page_preview=True, parse_mode="Markdown")
+        except Exception as e:
+            print(e)
 
 #############################
 
@@ -572,8 +570,8 @@ def zaman(metin):
 @ICOB_BOT.on_message(Filters.command(["ban", "ban@icob_bot"]))
 def ban(client, message):
     mesaj = message.text
-    yetkiler = ("creator", "administrator")
     if message.chat.type != "private":
+        yetkiler = ("creator", "administrator")
         if message.reply_to_message:
             sure = message.text.split()
             if client.get_chat_member(message.chat.id, message.from_user.id)["status"] in yetkiler:
@@ -688,7 +686,7 @@ def ban(client, message):
                         #else:message.reply(f"""Banlamak istediğiniz kişinin zaten **__{datetime.utcfromtimestamp(client.get_chat_member(message.chat.id, mesaj2[1])["until_date"])}__** süresine kadar banı var.""")
                     else:message.reply("Birini banlayabilmek için yönetici olmanız lazım.")
                 #else:message.reply("Lütfen /ban komutunu banlayacağınız kişinin mesajını yanıtlayarak veya kişinin ID'sini ya da kullanıcı adını girerek kullanınız.")
-                
+
 
             elif len(mesaj2) == 3:
                 if zaman(mesaj2[1]) == "hata" and zaman(mesaj2[2]) != "hata":
